@@ -2,27 +2,21 @@
 
 [简体中文](README.zh-CN.md)
 
-This tool safely manages two optional local patches for the ChatGPT/Codex desktop App:
+This tool safely manages two local patches for problems that can affect Codex sessions signed in with an API key:
 
-1. **New model visibility:** models returned by the provider with `visibility=list` can appear in the model picker. No GPT model IDs are hard-coded.
-2. **API-key Fast:** API-key sessions can display the Fast/Priority option when the selected model declares that service tier.
+1. **Keep newly released models up to date:** fixes the delay where newly released models may not appear promptly in the Codex model picker when signed in with an API key. Models returned by the provider with `visibility=list` can appear automatically, without hard-coding any GPT model IDs.
+2. **Force Fast mode switching:** fixes the missing Fast mode menu in API-key sessions. When the selected model declares support for the corresponding service tier, the patch forces the Standard/Fast (Priority) switch to be available.
 
 > [!WARNING]
 > This project modifies a locally installed third-party desktop application. Every real write creates a hash-verified backup first, but the patched macOS App must use a local ad-hoc signature and will no longer pass Gatekeeper assessment as an official OpenAI build.
 
 ## Screenshots
 
-### New models in the picker
+| Newly released models in the picker | Forced Fast mode switching |
+| --- | --- |
+| ![The actual ChatGPT model picker showing 5.6 Sol, 5.6 Terra, and 5.6 Luna](docs/images/model-picker-en.png) | ![The actual ChatGPT speed menu showing Standard and Fast](docs/images/fast-option-en.png) |
 
-![The actual ChatGPT model picker showing 5.6 Sol, 5.6 Terra, and 5.6 Luna](docs/images/model-picker-en.png)
-
-The patch follows the provider's `visibility` result instead of maintaining a fixed model allowlist.
-
-### Standard and Fast in API-key mode
-
-![The actual ChatGPT speed menu showing Standard and Fast](docs/images/fast-option-en.png)
-
-These are the original privacy-safe screenshots supplied from a locally verified Simplified Chinese App session. The menu behavior is identical in other locales, and no account, prompt, or workspace data is shown.
+Both screenshots were captured from a locally verified Codex session signed in with an API key. The first shows models surfaced from the provider's `visibility` result without a fixed model allowlist; the second shows the Standard/Fast switch made available in the same API-key login mode. No account, prompt, or workspace data is shown.
 
 ## Requirements
 

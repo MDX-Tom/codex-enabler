@@ -2,27 +2,21 @@
 
 [English](README.md)
 
-该工具用于安全管理 ChatGPT/Codex 桌面 App 的两个可选本地补丁：
+该工具用于安全管理两个本地补丁，专门解决使用 API key 登录 Codex 时可能遇到的两个问题：
 
-1. **新模型显示：** provider 返回的模型只要标记为 `visibility=list`，就可以进入模型菜单；不写死任何 GPT 模型 ID。
-2. **API key Fast：** 使用 API key 登录时，为声明支持相应 service tier 的模型显示 Fast/Priority 选项。
+1. **新模型及时显示：** 解决新模型发布后，使用 API key 登录 Codex 时模型菜单更新不及时的问题。provider 返回的模型只要标记为 `visibility=list`，就可以自动进入模型菜单，无需写死任何 GPT 模型 ID。
+2. **强制支持 Fast 模式切换：** 解决使用 API key 登录 Codex 时无法看到 Fast mode 菜单的问题。当所选模型声明支持相应 service tier 时，补丁会强制显示标准/Fast（Priority）切换选项。
 
 > [!WARNING]
 > 本项目会修改本机安装的第三方桌面应用。每次实际写入前都会创建经过哈希验证的备份，但补丁后的 macOS App 必须使用本地 ad-hoc 签名，因此 Gatekeeper 不会再将其视为 OpenAI 官方发行版。
 
 ## 功能截图
 
-### 新模型进入模型菜单
+| 新模型及时进入模型菜单 | 强制支持 Fast 模式切换 |
+| --- | --- |
+| ![真实 ChatGPT 模型菜单，显示 5.6 Sol、5.6 Terra 和 5.6 Luna](docs/images/model-picker-zh-CN.png) | ![真实 ChatGPT 速度菜单，显示标准和快速选项](docs/images/fast-option-zh-CN.png) |
 
-![真实 ChatGPT 模型菜单，显示 5.6 Sol、5.6 Terra 和 5.6 Luna](docs/images/model-picker-zh-CN.png)
-
-补丁遵循 provider 返回的 `visibility`，不维护固定模型白名单。
-
-### API key 模式的标准与快速
-
-![真实 ChatGPT 速度菜单，显示标准和快速选项](docs/images/fast-option-zh-CN.png)
-
-以上为用户提供的本机已验证补丁 App 原始截图，未使用标注示意图；图片中不包含账号、提示词或工作区信息。
+两张图片均截取自本机已验证的 API key 登录状态。左图展示补丁根据 provider 返回的 `visibility` 及时显示新模型，不维护固定模型白名单；右图展示在相同 API key 登录模式下可用的标准/Fast 切换。图片中不包含账号、提示词或工作区信息。
 
 ## 环境要求
 
