@@ -1,0 +1,21 @@
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# Local source screenshots copied into docs/images after review
+/截屏*.png
+
+# Local patch backups, manifests, captures, and machine paths
+outputs/
+
+# Dependencies and test artifacts
+node_modules/
+coverage/
+*.log
+.env
+.env.*
+
+# Local Codex handoff notes
+codex/
+AGENTS.md

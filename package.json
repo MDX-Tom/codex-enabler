@@ -1,0 +1,15 @@
+{
+  "name": "chatgpt-codex-api-mode-patcher",
+  "version": "0.2.1",
+  "description": "Minimal local patches for ChatGPT/Codex App model visibility and API-key Fast mode.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "check": "node --check scripts/chatgpt_app_feature_patcher.mjs && node --check scripts/chatgpt_app_feature_patcher.zh-CN.mjs && node --check scripts/patch_chatgpt_model_picker.mjs && node --check scripts/patch_chatgpt_model_picker.zh-CN.mjs && node --check scripts/record_patch_validation.mjs && node --check scripts/record_patch_validation.zh-CN.mjs && node --check scripts/restore_chatgpt_app.mjs && node --check scripts/restore_chatgpt_app.zh-CN.mjs",
+    "test": "node --test",
+    "release:check": "npm run check && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
