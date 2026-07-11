@@ -16,7 +16,14 @@ import {
   stat,
   writeFile,
 } from 'node:fs/promises';
-import { basename, dirname, join, resolve, win32 as winPath } from 'node:path';
+import {
+  basename,
+  dirname,
+  join,
+  posix as posixPath,
+  resolve,
+  win32 as winPath,
+} from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
@@ -62,14 +69,14 @@ export function resolveInstallPaths({
   localAppData = process.env.LOCALAPPDATA ?? null,
 } = {}) {
   if (targetPlatform === 'darwin') {
-    const app = resolve(appOverride ?? '/Applications/ChatGPT.app');
-    const resources = resolve(resourcesOverride ?? join(app, 'Contents/Resources'));
+    const app = posixPath.resolve(appOverride ?? '/Applications/ChatGPT.app');
+    const resources = posixPath.resolve(resourcesOverride ?? posixPath.join(app, 'Contents/Resources'));
     return {
       appPath: app,
-      archivePath: join(resources, 'app.asar'),
-      codeResourcesPath: join(app, 'Contents/_CodeSignature/CodeResources'),
-      executablePath: join(app, 'Contents/MacOS/ChatGPT'),
-      infoPlistPath: join(app, 'Contents/Info.plist'),
+      archivePath: posixPath.join(resources, 'app.asar'),
+      codeResourcesPath: posixPath.join(app, 'Contents/_CodeSignature/CodeResources'),
+      executablePath: posixPath.join(app, 'Contents/MacOS/ChatGPT'),
+      infoPlistPath: posixPath.join(app, 'Contents/Info.plist'),
       resourcesPath: resources,
     };
   }
