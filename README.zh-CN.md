@@ -38,13 +38,26 @@ node ./scripts/chatgpt_app_feature_patcher.mjs
 1. 添加功能 1
 2. 添加功能 2
 3. 添加全部功能
-4. 改为默认值
+4. 恢复官方默认状态（官方更新前必须执行）
 q. 退出
 ```
 
 修改 App 前还需要输入 `y` 确认。正常 macOS 运行时，脚本会退出 App、完成补丁和验证，然后重新启动 App。
 
-## 官方 App 更新后
+## 官方 App 更新前后
+
+macOS 上，补丁后的 App 使用本地 ad-hoc 签名。Sparkle 官方安装器要求当前 App 保持 OpenAI 官方签名，同时增量更新要求当前 bundle 与官方基线一致。因此，**检查或安装官方更新前，必须先运行脚本并选择 `4. 恢复官方默认状态`**。仅把两个功能表达式变回“默认”但仍保留 ad-hoc 签名，不满足更新条件；状态页中的“官方更新”必须显示“可直接运行”。
+
+本项目目录被移动或重命名后，工具会自动把 manifest 中旧的绝对备份路径重定位到当前 `outputs/patches/<补丁 ID>/`，确保同版本官方备份仍可用于恢复签名。
+
+推荐更新流程：
+
+```text
+1. 运行补丁工具并选择 4
+2. 确认“签名：official-openai”和“官方更新：可直接运行”
+3. 在 ChatGPT 菜单中选择 Check for Updates… 并完成更新
+4. 更新完成后重新运行补丁工具，选择 3 添加全部功能
+```
 
 官方更新会覆盖本地补丁。更新完成后重新运行同一个脚本，通常选择 `3. 添加全部功能`。
 
@@ -56,7 +69,7 @@ q. 退出
 
 - 每次实际修改 App 前，工具都会将 `app.asar`、`Info.plist`、主程序和 `CodeResources` 备份到 `outputs/patches/<timestamp>-<action>/`。
 - `manifest.json` 会记录 SHA-256、文件权限、签名输出、功能状态和精确回滚命令。
-- `4. 改为默认值` 会优先使用相同 App 版本和 bundle version 的已验证官方备份，恢复原始文件和 OpenAI 签名。
+- `4. 恢复官方默认状态` 会优先使用相同 App 版本和 bundle version 的已验证官方备份，恢复原始文件和 OpenAI 签名；这是 macOS 官方更新前的必需步骤。
 - `node ./scripts/restore_chatgpt_app.mjs` 是相同默认值恢复流程的兼容入口。
 - 为避免跨版本破坏，回滚 manifest 不允许应用到其他 App 版本。
 

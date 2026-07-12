@@ -5,6 +5,7 @@ import {
   featureDefinitions,
   normalizeLanguage,
   parseAsarHeaderLayout,
+  relocateManifestBackupFiles,
   resolveInstallPaths,
 } from '../scripts/chatgpt_app_feature_patcher.mjs';
 
@@ -59,6 +60,26 @@ test('language selection defaults to English unless explicitly Chinese', () => {
   assert.equal(normalizeLanguage('en-US'), 'en');
   assert.equal(normalizeLanguage('zh-CN'), 'zh-CN');
   assert.equal(normalizeLanguage('zh-Hans'), 'zh-CN');
+});
+
+test('moved repositories relocate manifest backup files beside the manifest', () => {
+  const manifest = {
+    backup_files: {
+      app_asar: '/old/repository/outputs/patches/PATCH_ID/app.asar',
+      info_plist: '/old/repository/outputs/patches/PATCH_ID/Info.plist',
+    },
+  };
+  const existing = new Set([
+    '/new/repository/outputs/patches/PATCH_ID/app.asar',
+    '/new/repository/outputs/patches/PATCH_ID/Info.plist',
+  ]);
+  const relocated = relocateManifestBackupFiles(
+    manifest,
+    '/new/repository/outputs/patches/PATCH_ID/manifest.json',
+    (path) => existing.has(path),
+  );
+  assert.equal(relocated.backup_files.app_asar, '/new/repository/outputs/patches/PATCH_ID/app.asar');
+  assert.equal(relocated.backup_files.info_plist, '/new/repository/outputs/patches/PATCH_ID/Info.plist');
 });
 
 test('ASAR parsing follows Pickle alignment instead of a fixed app-version layout', () => {

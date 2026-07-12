@@ -38,13 +38,26 @@ The tool displays the App version, signature, and current state of both features
 1. Enable feature 1
 2. Enable feature 2
 3. Enable both features
-4. Restore defaults
+4. Restore official defaults (required before official updates)
 q. Quit
 ```
 
 A write operation requires an additional `y` confirmation. During a normal macOS run, the tool quits the App, patches and verifies it, then launches it again.
 
-## After an official App update
+## Before and after an official App update
+
+On macOS, a patched App uses a local ad-hoc signature. Sparkle's official installer expects the installed App to retain OpenAI's official signature, and delta updates expect the current bundle to match the official baseline. **Before checking for or installing an official update, run the patcher and choose `4. Restore official defaults`.** Returning only the two feature expressions to their default values while keeping an ad-hoc signature is not sufficient; the status output must show `Official updates: ready`.
+
+If this project directory is moved or renamed, the tool relocates stale absolute manifest paths to the matching `outputs/patches/<patch ID>/` directory in the current checkout, so the same-version official backup remains usable.
+
+Recommended update sequence:
+
+```text
+1. Run the patcher and choose 4
+2. Confirm "Signature: official-openai" and "Official updates: ready"
+3. Choose Check for Updates… in the ChatGPT menu and finish the update
+4. Run the patcher again after the update and choose 3 to enable both features
+```
 
 An official update replaces local patches. Run the same script again and normally choose `3. Enable both features`.
 
@@ -56,7 +69,7 @@ If an older Fast patch is detected as `legacy patch (migration required)`, choos
 
 - Before every real App modification, the tool backs up `app.asar`, `Info.plist`, the main executable, and `CodeResources` under `outputs/patches/<timestamp>-<action>/`.
 - SHA-256 hashes, file modes, signing output, feature states, and the exact rollback command are recorded in `manifest.json`.
-- `4. Restore defaults` prefers a verified official backup from the same App and bundle version, restoring the original files and OpenAI signature.
+- `4. Restore official defaults` prefers a verified official backup from the same App and bundle version, restoring the original files and OpenAI signature; this is required before official macOS updates.
 - `node ./scripts/restore_chatgpt_app.mjs` is the compatibility entry point for the same default-restoration workflow.
 - Rollback manifests intentionally cannot be applied to a different App version.
 

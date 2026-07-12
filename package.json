@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-codex-api-mode-patcher",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Minimal local patches for ChatGPT/Codex App model visibility and API-key Fast mode.",
   "type": "module",
   "license": "MIT",

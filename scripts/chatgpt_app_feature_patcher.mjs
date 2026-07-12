@@ -29,7 +29,7 @@ import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
-const toolVersion = '0.2.1';
+const toolVersion = '0.2.2';
 const workspace = resolve(import.meta.dirname, '..');
 const outputRoot = join(workspace, 'outputs');
 const patchesRoot = join(outputRoot, 'patches');
@@ -911,7 +911,13 @@ async function registerOfficialBaseline(backup) {
 async function candidateManifestPaths() {
   const paths = [];
   const registry = await loadRegistry();
-  paths.push(...registry.baselines.map((entry) => entry.manifest_path));
+  for (const entry of registry.baselines) {
+    const registeredPath = entry.manifest_path;
+    paths.push(registeredPath);
+    if (registeredPath != null) {
+      paths.push(join(patchesRoot, basename(dirname(registeredPath)), basename(registeredPath)));
+    }
+  }
   if (await pathExists(patchesRoot)) {
     for (const entry of await readdir(patchesRoot, { withFileTypes: true })) {
       if (entry.isDirectory()) {
@@ -920,6 +926,21 @@ async function candidateManifestPaths() {
     }
   }
   return [...new Set(paths)];
+}
+
+export function relocateManifestBackupFiles(manifest, manifestPath, fileExists = existsSync) {
+  if (manifest?.backup_files == null) {
+    return manifest;
+  }
+  const manifestDirectory = dirname(resolve(manifestPath));
+  const backupFiles = Object.fromEntries(Object.entries(manifest.backup_files).map(([key, storedPath]) => {
+    if (fileExists(storedPath)) {
+      return [key, storedPath];
+    }
+    const relocatedPath = join(manifestDirectory, basename(storedPath));
+    return [key, fileExists(relocatedPath) ? relocatedPath : storedPath];
+  }));
+  return { ...manifest, backup_files: backupFiles };
 }
 
 async function manifestLooksOfficial(manifest, manifestPath) {
@@ -951,7 +972,10 @@ async function findOfficialBaseline(metadata) {
     }
     let manifest;
     try {
-      manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+      manifest = relocateManifestBackupFiles(
+        JSON.parse(await readFile(manifestPath, 'utf8')),
+        manifestPath,
+      );
     } catch {
       continue;
     }
@@ -1322,7 +1346,10 @@ async function restoreOfficialDefaults() {
 
 async function restoreFromManifest(manifestPath) {
   const resolvedManifestPath = resolve(manifestPath);
-  const targetManifest = JSON.parse(await readFile(resolvedManifestPath, 'utf8'));
+  const targetManifest = relocateManifestBackupFiles(
+    JSON.parse(await readFile(resolvedManifestPath, 'utf8')),
+    resolvedManifestPath,
+  );
   const metadata = await appMetadata();
   if (
     (targetManifest.platform ?? 'darwin') !== platform
@@ -1423,6 +1450,16 @@ function printStatus(status) {
     const match = currentMatch(status.inspection, feature);
     console.log(`${feature.number}. ${featureText(feature, 'shortLabel')}${separator} ${stateText(state)}${match == null ? '' : ` [${match.path}]`}`);
   }
+  if (isMac) {
+    const officialUpdateReady = status.metadata.signatureKind === 'official-openai'
+      && featureDefinitions.every((feature) => status.inspection.states[feature.id] === 'default');
+    console.log(`${localize('Official updates', '官方更新')}${separator} ${officialUpdateReady
+      ? localize('ready', '可直接运行')
+      : localize(
+          'restore official defaults with option 4 before checking for updates',
+          '检查更新前请先选择 4 恢复官方默认状态',
+        )}`);
+  }
   console.log('');
 }
 
@@ -1506,7 +1543,10 @@ async function interactiveMain() {
       console.log(localize('1. Enable feature 1', '1. 添加功能 1'));
       console.log(localize('2. Enable feature 2', '2. 添加功能 2'));
       console.log(localize('3. Enable both features', '3. 添加全部功能'));
-      console.log(localize('4. Restore defaults', '4. 改为默认值'));
+      console.log(localize(
+        '4. Restore official defaults (required before official updates)',
+        '4. 恢复官方默认状态（官方更新前必须执行）',
+      ));
       console.log(localize('q. Quit', 'q. 退出'));
       const answer = (await rl.question('> ')).trim().toLowerCase();
       if (answer === 'q') {
@@ -1547,8 +1587,8 @@ async function interactiveMain() {
 
 function printHelp() {
   console.log(localize(
-    `ChatGPT/Codex App Feature Patcher ${toolVersion}\n\nUsage:\n  ./scripts/chatgpt_app_feature_patcher.mjs [options]\n\nOptions:\n  --status                    Show current state without modifying files\n  --set feature1|feature2|all|default\n  --dry-run                   Preview changes only\n  --yes                       Confirm a non-interactive write\n  --lang en|zh-CN             Output language (default: en)\n  --app <path>                macOS .app path or Windows .exe/directory\n  --resources <path>          Override the Electron resources directory\n  --no-quit                   Do not stop or relaunch the App\n  --no-launch                 Do not relaunch after a write\n  --restore-manifest <path>   Restore an exact backup manifest\n  --version                   Print tool version\n  --help                      Show this help\n\nWindows support is experimental and unverified.`,
-    `ChatGPT/Codex App 功能补丁工具 ${toolVersion}\n\n用法：\n  ./scripts/chatgpt_app_feature_patcher.zh-CN.mjs [选项]\n\n选项：\n  --status                    只显示当前状态\n  --set feature1|feature2|all|default\n  --dry-run                   只预演，不修改文件\n  --yes                       确认非交互写入\n  --lang en|zh-CN             输出语言（默认英文）\n  --app <路径>                macOS .app 或 Windows .exe/目录\n  --resources <路径>          覆盖 Electron resources 目录\n  --no-quit                   不退出或重启 App\n  --no-launch                 写入后不重启 App\n  --restore-manifest <路径>   按 manifest 精确回滚\n  --version                   显示工具版本\n  --help                      显示帮助\n\nWindows 支持仍为实验性且尚未实测。`,
+    `ChatGPT/Codex App Feature Patcher ${toolVersion}\n\nUsage:\n  ./scripts/chatgpt_app_feature_patcher.mjs [options]\n\nOptions:\n  --status                    Show current state without modifying files\n  --set feature1|feature2|all|default\n  --dry-run                   Preview changes only\n  --yes                       Confirm a non-interactive write\n  --lang en|zh-CN             Output language (default: en)\n  --app <path>                macOS .app path or Windows .exe/directory\n  --resources <path>          Override the Electron resources directory\n  --no-quit                   Do not stop or relaunch the App\n  --no-launch                 Do not relaunch after a write\n  --restore-manifest <path>   Restore an exact backup manifest\n  --version                   Print tool version\n  --help                      Show this help\n\nOn macOS, restore official defaults before using the App's official updater.\nWindows support is experimental and unverified.`,
+    `ChatGPT/Codex App 功能补丁工具 ${toolVersion}\n\n用法：\n  ./scripts/chatgpt_app_feature_patcher.zh-CN.mjs [选项]\n\n选项：\n  --status                    只显示当前状态\n  --set feature1|feature2|all|default\n  --dry-run                   只预演，不修改文件\n  --yes                       确认非交互写入\n  --lang en|zh-CN             输出语言（默认英文）\n  --app <路径>                macOS .app 或 Windows .exe/目录\n  --resources <路径>          覆盖 Electron resources 目录\n  --no-quit                   不退出或重启 App\n  --no-launch                 写入后不重启 App\n  --restore-manifest <路径>   按 manifest 精确回滚\n  --version                   显示工具版本\n  --help                      显示帮助\n\nmacOS 使用 App 官方更新前，必须先恢复官方默认状态。\nWindows 支持仍为实验性且尚未实测。`,
   ));
 }
 
