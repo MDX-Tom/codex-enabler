@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { basename, dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 
 import {
@@ -63,23 +64,29 @@ test('language selection defaults to English unless explicitly Chinese', () => {
 });
 
 test('moved repositories relocate manifest backup files beside the manifest', () => {
+  const oldPatchDirectory = resolve('old-repository', 'outputs', 'patches', 'PATCH_ID');
+  const newPatchDirectory = resolve('new-repository', 'outputs', 'patches', 'PATCH_ID');
+  const manifestPath = join(newPatchDirectory, 'manifest.json');
   const manifest = {
     backup_files: {
-      app_asar: '/old/repository/outputs/patches/PATCH_ID/app.asar',
-      info_plist: '/old/repository/outputs/patches/PATCH_ID/Info.plist',
+      app_asar: join(oldPatchDirectory, 'app.asar'),
+      info_plist: join(oldPatchDirectory, 'Info.plist'),
     },
   };
   const existing = new Set([
-    '/new/repository/outputs/patches/PATCH_ID/app.asar',
-    '/new/repository/outputs/patches/PATCH_ID/Info.plist',
+    join(newPatchDirectory, 'app.asar'),
+    join(newPatchDirectory, 'Info.plist'),
   ]);
   const relocated = relocateManifestBackupFiles(
     manifest,
-    '/new/repository/outputs/patches/PATCH_ID/manifest.json',
+    manifestPath,
     (path) => existing.has(path),
   );
-  assert.equal(relocated.backup_files.app_asar, '/new/repository/outputs/patches/PATCH_ID/app.asar');
-  assert.equal(relocated.backup_files.info_plist, '/new/repository/outputs/patches/PATCH_ID/Info.plist');
+  assert.equal(dirname(manifestPath), newPatchDirectory);
+  assert.equal(basename(relocated.backup_files.app_asar), 'app.asar');
+  assert.equal(basename(relocated.backup_files.info_plist), 'Info.plist');
+  assert.equal(relocated.backup_files.app_asar, join(newPatchDirectory, 'app.asar'));
+  assert.equal(relocated.backup_files.info_plist, join(newPatchDirectory, 'Info.plist'));
 });
 
 test('ASAR parsing follows Pickle alignment instead of a fixed app-version layout', () => {
